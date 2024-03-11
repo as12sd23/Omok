@@ -217,8 +217,9 @@ void COmokDlg::OnBnClickedButtStart()
 			m_DotSpace[i][j].Setting(X, Y);
 		}
 	}
+	CClientDC dc(this);
 
-	SetTimer(1, 1, NULL);
+	dc.BitBlt(0, 0, 800, 800, &m_MemDC, 0, 0, SRCCOPY);
 }
 
 
@@ -232,23 +233,6 @@ void COmokDlg::OnBnClickedButtExit()
 void COmokDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
-	CClientDC dc(this);
-
-	char Game = GamePlay();
-
-	if (Game == 'B')
-	{
-		KillTimer(1);
-		MessageBox("검은돌 승리!", "알림", NULL);
-		OnOK();
-	}
-	else if (Game == 'W')
-	{
-		KillTimer(1);
-		MessageBox("횐돌 승리!", "알림", NULL);
-		OnOK();
-	}
-	dc.BitBlt(0, 0, 800, 800, &m_MemDC, 0, 0, SRCCOPY);
 
 	CDialogEx::OnTimer(nIDEvent);
 }
@@ -285,6 +269,10 @@ BOOL COmokDlg::PreTranslateMessage(MSG* pMsg)
 void COmokDlg::OnLButtonDown(UINT nFlags, CPoint point)
 {
 	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
+	CClientDC dc(this);
+	char Game = NULL;
+	int X = 20;
+	int Y = 20;
 	for (int i = 0; i < 19; i++)
 	{
 		for (int j = 0; j < 19; j++)
@@ -294,114 +282,164 @@ void COmokDlg::OnLButtonDown(UINT nFlags, CPoint point)
 				if (m_PlayerTurn == 'B')
 				{
 					m_PlayerTurn = 'W';
+					m_MemDC.SetStretchBltMode(HALFTONE);
 					m_MemDC.StretchBlt(m_DotSpace[i][j].GetRect().left, m_DotSpace[i][j].GetRect().top, 36, 36, &m_StoneDC, 1000, 0, 500, 500, SRCAND);
 					m_MemDC.StretchBlt(m_DotSpace[i][j].GetRect().left, m_DotSpace[i][j].GetRect().top, 36, 36, &m_StoneDC, 0, 0, 500, 500, SRCPAINT);
 				}
 				else if (m_PlayerTurn == 'W')
 				{
 					m_PlayerTurn = 'B';
+					m_MemDC.SetStretchBltMode(HALFTONE);
 					m_MemDC.StretchBlt(m_DotSpace[i][j].GetRect().left, m_DotSpace[i][j].GetRect().top, 36, 36, &m_StoneDC, 1000, 0, 500, 500, SRCAND);
 					m_MemDC.StretchBlt(m_DotSpace[i][j].GetRect().left, m_DotSpace[i][j].GetRect().top, 36, 36, &m_StoneDC, 500, 0, 500, 500, SRCPAINT);
 				}
+				X = j;
+				Y = i;
+				Game = GamePlay(Y, X);
 			}
 		}
 	}
+
+	dc.BitBlt(0, 0, 800, 800, &m_MemDC, 0, 0, SRCCOPY);
+
+
+	if (Game == 'B')
+	{
+		KillTimer(1);
+		MessageBox("검은돌 승리!", "알림", NULL);
+		OnOK();
+	}
+	else if (Game == 'W')
+	{
+		KillTimer(1);
+		MessageBox("횐돌 승리!", "알림", NULL);
+		OnOK();
+	}
+
 	CDialogEx::OnLButtonDown(nFlags, point);
 }
 
-char COmokDlg::GamePlay()
+char COmokDlg::GamePlay(int y, int x)
 {
 	// TODO: 여기에 구현 코드 추가.
 	char Game = NULL;
-
-	for (int i = 0; i < 19; i++)
+	int StoneCount[8];
+	bool StoneCounting[8];
+	for (int i = 0; i < 8; i++)
 	{
-		for (int j = 0; j < 19; j++)
+		StoneCount[i] = 0;
+		StoneCounting[i] = true;
+	}
+
+	for (int i = 1; i < 6; i++)
+	{
+		if (m_DotSpace[y][x].GetAlive() == 'B')
 		{
-			if (m_DotSpace[i][j].GetAlive() != 'A')
-			{
-				if (Game == NULL)
-				{
-					for (int index = j; index < j + 5; index++) //가로 5개 판단
-					{
-						if (m_DotSpace[i][j].GetAlive() == 'B')
-						{
-							if (m_DotSpace[i][index].GetAlive() != 'B')
-								break;
-							else if (j + 4 == index)
-								Game = 'B';
-						}
-						else if (m_DotSpace[i][j].GetAlive() == 'W')
-						{
-							if (m_DotSpace[i][index].GetAlive() != 'W')
-								break;
-							else if (j + 4 == index)
-								Game = 'W';
-						}
-					}
-				}
-				if (Game == NULL)
-				{
-					for (int index = i; index < i + 5; index++) // 새로 5개 판단
-					{
-						if (m_DotSpace[i][j].GetAlive() == 'B')
-						{
-							if (m_DotSpace[index][j].GetAlive() != 'B')
-								break;
-							else if (i + 4 == index)
-								Game = 'B';
-						}
-						else if (m_DotSpace[i][j].GetAlive() == 'W')
-						{
-							if (m_DotSpace[index][j].GetAlive() != 'W')
-								break;
-							else if (i + 4 == index)
-								Game = 'W';
-						}
-					}
-				}
-				if (Game == NULL && i >= 0 && i < 15 && j >= 0 && j < 15)
-				{
-					for (int index = 0; index < 5; index++) // 대각선 오른쪽 아래 방향
-					{
-						if (m_DotSpace[i][j].GetAlive() == 'B')
-						{
-							if (m_DotSpace[i + index][j + index].GetAlive() != 'B')
-								break;
-							else if (i + 4 == index)
-								Game = 'B';
-						}
-						else if (m_DotSpace[i][j].GetAlive() == 'W')
-						{
-							if (m_DotSpace[i + index][j + index].GetAlive() != 'W')
-								break;
-							else if (j + 4 == index)
-								Game = 'W';
-						}
-					}
-				}
-				if (Game == NULL && i > 3 && i < 19 && j > 0 && j < 14)
-				{
-					for (int index = 0; index < 5; index++) // 대각선 오른쪽 아래 방향
-					{
-						if (m_DotSpace[i][j].GetAlive() == 'B')
-						{
-							if (m_DotSpace[i + index][j + index].GetAlive() != 'B')
-								break;
-							else if (i + 4 == index)
-								Game = 'B';
-						}
-						else if (m_DotSpace[i][j].GetAlive() == 'W')
-						{
-							if (m_DotSpace[i + index][j + index].GetAlive() != 'W')
-								break;
-							else if (j + 4 == index)
-								Game = 'W';
-						}
-					}
-				}
-			}
+			if (m_DotSpace[y - i][x - i].GetAlive() == 'B' && StoneCounting[0] == true)
+				StoneCount[0] += 1;
+			else
+				StoneCounting[0] = false;
+
+			if (m_DotSpace[y - i][x].GetAlive() == 'B' && StoneCounting[1] == true)
+				StoneCount[1] += 1;
+			else
+				StoneCounting[1] = false;
+
+			if (m_DotSpace[y - i][x + i].GetAlive() == 'B' && StoneCounting[2] == true)
+				StoneCount[2] += 1;
+			else
+				StoneCounting[2] = false;
+
+
+			if (m_DotSpace[y][x - i].GetAlive() == 'B' && StoneCounting[3] == true)
+				StoneCount[3] += 1;
+			else
+				StoneCounting[3] = false;
+
+			if (m_DotSpace[y][x + i].GetAlive() == 'B' && StoneCounting[4] == true)
+				StoneCount[4] += 1;
+			else
+				StoneCounting[4] = false;
+
+
+			if (m_DotSpace[y + i][x - i].GetAlive() == 'B' && StoneCounting[5] == true)
+				StoneCount[5] += 1;
+			else
+				StoneCounting[5] = false;
+
+			if (m_DotSpace[y + i][x].GetAlive() == 'B' && StoneCounting[6] == true)
+				StoneCount[6] += 1;
+			else
+				StoneCounting[6] = false;
+
+			if (m_DotSpace[y + i][x + i].GetAlive() == 'B' && StoneCounting[7] == true)
+				StoneCount[7] += 1;
+			else
+				StoneCounting[7] = false;
 		}
+		else if (m_DotSpace[y][x].GetAlive() == 'W')
+		{
+			if (m_DotSpace[y - i][x - i].GetAlive() == 'W' && StoneCounting[0] == true)
+				StoneCount[0] += 1;
+			else
+				StoneCounting[0] = false;
+
+			if (m_DotSpace[y - i][x].GetAlive() == 'W' && StoneCounting[1] == true)
+				StoneCount[1] += 1;
+			else
+				StoneCounting[1] = false;
+
+			if (m_DotSpace[y - i][x + i].GetAlive() == 'W' && StoneCounting[2] == true)
+				StoneCount[2] += 1;
+			else
+				StoneCounting[2] = false;
+
+
+			if (m_DotSpace[y][x - i].GetAlive() == 'W' && StoneCounting[3] == true)
+				StoneCount[3] += 1;
+			else
+				StoneCounting[3] = false;
+
+			if (m_DotSpace[y][x + i].GetAlive() == 'W' && StoneCounting[4] == true)
+				StoneCount[4] += 1;
+			else
+				StoneCounting[4] = false;
+
+
+			if (m_DotSpace[y + i][x - i].GetAlive() == 'W' && StoneCounting[5] == true)
+				StoneCount[5] += 1;
+			else
+				StoneCounting[5] = false;
+
+			if (m_DotSpace[y + i][x].GetAlive() == 'W' && StoneCounting[6] == true)
+				StoneCount[6] += 1;
+			else
+				StoneCounting[6] = false;
+
+			if (m_DotSpace[y + i][x + i].GetAlive() == 'W' && StoneCounting[7] == true)
+				StoneCount[7] += 1;
+			else
+				StoneCounting[7] = false;
+		}
+	}
+
+	int Count = 0;
+
+	for (int i = 0; i < 4; i++)
+	{
+		Count = StoneCount[i] + StoneCount[7 - i];
+		if (Count == 4)
+			break;
+		else
+			Count = 0;
+	}
+
+	if (Count == 4)
+	{
+		if (m_DotSpace[y][x].GetAlive() == 'B')
+			Game = 'B';
+		else if (m_DotSpace[y][x].GetAlive() == 'W')
+			Game = 'W';
 	}
 	return Game;
 }

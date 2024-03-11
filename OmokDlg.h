@@ -45,9 +45,9 @@ private :
 	CPen m_LinePen;
 	CPen m_LineDotPen;
 	CDotSpace m_DotSpace[19][19];
-	char m_PlayerTurn;
+	char m_PlayerTurn = NULL;
 public:
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-	char GamePlay();
+	char GamePlay(int y, int x);
 };

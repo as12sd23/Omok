@@ -3,7 +3,7 @@
 //
 
 #pragma once
-
+#include "CDotSpace.h"
 
 // COmokDlg 대화 상자
 class COmokDlg : public CDialogEx
@@ -44,4 +44,10 @@ private :
 	CBitmap m_MemBm;
 	CPen m_LinePen;
 	CPen m_LineDotPen;
+	CDotSpace m_DotSpace[19][19];
+	char m_PlayerTurn;
+public:
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+	char GamePlay();
 };

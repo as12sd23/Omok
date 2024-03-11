@@ -1,12 +1,43 @@
 #include "pch.h"
 #include "CDotSpace.h"
-void CDotSpace::Setting()
+void CDotSpace::Setting(int X, int Y)
 {
-	for (int i = 0, X = 22; i < 19; i++, X+=20)
+	m_Space = CRect(X, Y, X + 36, Y + 36);
+	m_Alive = NULL;
+}
+
+void CDotSpace::Drawing(CDC* memDC)
+{
+	memDC->Rectangle(&m_Space);
+}
+
+bool CDotSpace::Determine(int x, int y, char Color)
+{
+	bool A = false;
+
+	if (m_Space.left <= x && m_Space.right >= x &&
+		m_Space.top <= y && m_Space.bottom >= y &&
+		m_Alive == NULL)
 	{
-		for (int j = 0, Y = 22; j < 19; j++, Y+=20)
+		if (Color == 'B')
 		{
-			m_Space[i] = CRect(X, Y, X + 18, Y + 18);
+			m_Alive = Color;
+			A = true;
+		}
+		else if (Color == 'W')
+		{
+			m_Alive = Color;
+			A = true;
 		}
 	}
+	return A;
+}
+CRect CDotSpace::GetRect()
+{
+	return m_Space;
+}
+
+char CDotSpace::GetAlive()
+{
+	return m_Alive;
 }

@@ -12,6 +12,7 @@
 #define new DEBUG_NEW
 #endif
 
+#include "CDotSpace.h"
 
 // 응용 프로그램 정보에 사용되는 CAboutDlg 대화 상자입니다.
 
@@ -32,8 +33,8 @@ public:
 protected:
 	DECLARE_MESSAGE_MAP()
 public:
-	virtual BOOL PreTranslateMessage(MSG* pMsg);
-	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+//	virtual BOOL PreTranslateMessage(MSG* pMsg);
+//	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 };
 
 CAboutDlg::CAboutDlg() : CDialogEx(IDD_ABOUTBOX)
@@ -46,7 +47,7 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
-	ON_WM_LBUTTONDOWN()
+//	ON_WM_LBUTTONDOWN()
 END_MESSAGE_MAP()
 
 
@@ -72,6 +73,7 @@ BEGIN_MESSAGE_MAP(COmokDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTT_START, &COmokDlg::OnBnClickedButtStart)
 	ON_BN_CLICKED(IDC_BUTT_EXIT, &COmokDlg::OnBnClickedButtExit)
 	ON_WM_TIMER()
+	ON_WM_LBUTTONDOWN()
 END_MESSAGE_MAP()
 
 
@@ -108,12 +110,11 @@ BOOL COmokDlg::OnInitDialog()
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
 
-
 	CClientDC dc(this);
 	m_MemDC.CreateCompatibleDC(&dc);
 	m_MemBm.CreateCompatibleBitmap(&dc, 1920, 1080);
 	m_MemDC.SelectObject(&m_MemBm);
-	
+
 	m_BoardBm.LoadBitmap(IDB_BOARD);
 	m_BoardDC.CreateCompatibleDC(&dc);
 	m_BoardDC.SelectObject(&m_BoardBm);
@@ -123,24 +124,7 @@ BOOL COmokDlg::OnInitDialog()
 	m_StoneDC.SelectObject(&m_StoneBm);
 
 
-	m_LinePen.CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
-	m_BoardDC.SelectObject(&m_LinePen);
-
-
-	m_MemDC.StretchBlt(0, 0, 800, 800, &m_BoardDC, 0, 0, 400, 400, SRCCOPY);
-
-	for (int i = 0, A = 40; i < 19; i++, A += 40)
-	{
-		m_MemDC.MoveTo(A, 40);
-		m_MemDC.LineTo(A, 761);
-		m_MemDC.MoveTo(40, A);
-		m_MemDC.LineTo(761, A);
-		if (i == 3 || i == 9 || i == 15)
-		{
-			m_MemDC.MoveTo(A, A);
-			m_MemDC.LineTo(A, A);
-		}
-	}
+	m_PlayerTurn = 'B';
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -206,9 +190,35 @@ void COmokDlg::OnBnClickedButtStart()
 	GetDlgItem(IDC_BUTT_EXIT)->ShowWindow(FALSE);
 	GetDlgItem(IDC_BUTT_EXIT)->EnableWindow(FALSE);
 
+
 	MoveWindow(360, 100, 1200, 900);
-	
-	SetTimer(1, 10, NULL);
+
+	m_LinePen.CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+
+	m_MemDC.StretchBlt(0, 0, 800, 800, &m_BoardDC, 0, 0, 400, 400, SRCCOPY);
+
+	for (int i = 0, A = 40; i < 19; i++, A += 40)
+	{
+		m_MemDC.MoveTo(A, 40);
+		m_MemDC.LineTo(A, 761);
+		m_MemDC.MoveTo(40, A);
+		m_MemDC.LineTo(761, A);
+		if (i == 3 || i == 9 || i == 15)
+		{
+			m_MemDC.MoveTo(A, A);
+			m_MemDC.LineTo(A, A);
+		}
+	}
+
+	for (int i = 0, X = 22; i < 19; i++, X += 40)
+	{
+		for (int j = 0, Y = 22; j < 19; j++, Y += 40)
+		{
+			m_DotSpace[i][j].Setting(X, Y);
+		}
+	}
+
+	SetTimer(1, 1, NULL);
 }
 
 
@@ -223,13 +233,48 @@ void COmokDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
 	CClientDC dc(this);
+
+	char Game = GamePlay();
+
+	if (Game == 'B')
+	{
+		KillTimer(1);
+		MessageBox("검은돌 승리!", "알림", NULL);
+		OnOK();
+	}
+	else if (Game == 'W')
+	{
+		KillTimer(1);
+		MessageBox("횐돌 승리!", "알림", NULL);
+		OnOK();
+	}
 	dc.BitBlt(0, 0, 800, 800, &m_MemDC, 0, 0, SRCCOPY);
 
 	CDialogEx::OnTimer(nIDEvent);
 }
 
 
-BOOL CAboutDlg::PreTranslateMessage(MSG* pMsg)
+//BOOL CAboutDlg::PreTranslateMessage(MSG* pMsg)
+//{
+	// TODO: 여기에 특수화된 코드를 추가 및/또는 기본 클래스를 호출합니다.
+
+//	return CDialogEx::PreTranslateMessage(pMsg);
+//}
+
+
+//void CAboutDlg::OnLButtonDown(UINT nFlags, CPoint point)
+//{
+	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
+//	m_DotSpace.SetDetermine(point.x, point.y, m_PlayerTurn);
+//	if (m_DotSpace.GetDetermine() == m_PlayerTurn)
+//	{
+//
+//	}
+//	CDialogEx::OnLButtonDown(nFlags, point);
+//}
+
+
+BOOL COmokDlg::PreTranslateMessage(MSG* pMsg)
 {
 	// TODO: 여기에 특수화된 코드를 추가 및/또는 기본 클래스를 호출합니다.
 
@@ -237,9 +282,126 @@ BOOL CAboutDlg::PreTranslateMessage(MSG* pMsg)
 }
 
 
-void CAboutDlg::OnLButtonDown(UINT nFlags, CPoint point)
+void COmokDlg::OnLButtonDown(UINT nFlags, CPoint point)
 {
 	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
-
+	for (int i = 0; i < 19; i++)
+	{
+		for (int j = 0; j < 19; j++)
+		{
+			if (m_DotSpace[i][j].Determine(point.x, point.y, m_PlayerTurn))
+			{
+				if (m_PlayerTurn == 'B')
+				{
+					m_PlayerTurn = 'W';
+					m_MemDC.StretchBlt(m_DotSpace[i][j].GetRect().left, m_DotSpace[i][j].GetRect().top, 36, 36, &m_StoneDC, 1000, 0, 500, 500, SRCAND);
+					m_MemDC.StretchBlt(m_DotSpace[i][j].GetRect().left, m_DotSpace[i][j].GetRect().top, 36, 36, &m_StoneDC, 0, 0, 500, 500, SRCPAINT);
+				}
+				else if (m_PlayerTurn == 'W')
+				{
+					m_PlayerTurn = 'B';
+					m_MemDC.StretchBlt(m_DotSpace[i][j].GetRect().left, m_DotSpace[i][j].GetRect().top, 36, 36, &m_StoneDC, 1000, 0, 500, 500, SRCAND);
+					m_MemDC.StretchBlt(m_DotSpace[i][j].GetRect().left, m_DotSpace[i][j].GetRect().top, 36, 36, &m_StoneDC, 500, 0, 500, 500, SRCPAINT);
+				}
+			}
+		}
+	}
 	CDialogEx::OnLButtonDown(nFlags, point);
+}
+
+char COmokDlg::GamePlay()
+{
+	// TODO: 여기에 구현 코드 추가.
+	char Game = NULL;
+
+	for (int i = 0; i < 19; i++)
+	{
+		for (int j = 0; j < 19; j++)
+		{
+			if (m_DotSpace[i][j].GetAlive() != 'A')
+			{
+				if (Game == NULL)
+				{
+					for (int index = j; index < j + 5; index++) //가로 5개 판단
+					{
+						if (m_DotSpace[i][j].GetAlive() == 'B')
+						{
+							if (m_DotSpace[i][index].GetAlive() != 'B')
+								break;
+							else if (j + 4 == index)
+								Game = 'B';
+						}
+						else if (m_DotSpace[i][j].GetAlive() == 'W')
+						{
+							if (m_DotSpace[i][index].GetAlive() != 'W')
+								break;
+							else if (j + 4 == index)
+								Game = 'W';
+						}
+					}
+				}
+				if (Game == NULL)
+				{
+					for (int index = i; index < i + 5; index++) // 새로 5개 판단
+					{
+						if (m_DotSpace[i][j].GetAlive() == 'B')
+						{
+							if (m_DotSpace[index][j].GetAlive() != 'B')
+								break;
+							else if (i + 4 == index)
+								Game = 'B';
+						}
+						else if (m_DotSpace[i][j].GetAlive() == 'W')
+						{
+							if (m_DotSpace[index][j].GetAlive() != 'W')
+								break;
+							else if (i + 4 == index)
+								Game = 'W';
+						}
+					}
+				}
+				if (Game == NULL && i >= 0 && i < 15 && j >= 0 && j < 15)
+				{
+					for (int index = 0; index < 5; index++) // 대각선 오른쪽 아래 방향
+					{
+						if (m_DotSpace[i][j].GetAlive() == 'B')
+						{
+							if (m_DotSpace[i + index][j + index].GetAlive() != 'B')
+								break;
+							else if (i + 4 == index)
+								Game = 'B';
+						}
+						else if (m_DotSpace[i][j].GetAlive() == 'W')
+						{
+							if (m_DotSpace[i + index][j + index].GetAlive() != 'W')
+								break;
+							else if (j + 4 == index)
+								Game = 'W';
+						}
+					}
+				}
+				if (Game == NULL && i > 3 && i < 19 && j > 0 && j < 14)
+				{
+					for (int index = 0; index < 5; index++) // 대각선 오른쪽 아래 방향
+					{
+						if (m_DotSpace[i][j].GetAlive() == 'B')
+						{
+							if (m_DotSpace[i + index][j + index].GetAlive() != 'B')
+								break;
+							else if (i + 4 == index)
+								Game = 'B';
+						}
+						else if (m_DotSpace[i][j].GetAlive() == 'W')
+						{
+							if (m_DotSpace[i + index][j + index].GetAlive() != 'W')
+								break;
+							else if (j + 4 == index)
+								Game = 'W';
+						}
+					}
+				}
+			}
+		}
+	}
+	return Game;
 }

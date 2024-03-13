@@ -10,5 +10,6 @@ public:
 	bool Determine(int x, int y, char Color);
 	CRect GetRect();
 	char GetAlive();
+	void DeleteDetermin();
 };
 

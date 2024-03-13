@@ -279,7 +279,15 @@ void COmokDlg::OnLButtonDown(UINT nFlags, CPoint point)
 		{
 			if (m_DotSpace[i][j].Determine(point.x, point.y, m_PlayerTurn))
 			{
-				if (m_PlayerTurn == 'B')
+				X = j;
+				Y = i;
+				Game = GamePlay(Y, X);
+				if (Game == 'F')
+				{
+					m_DotSpace[i][j].DeleteDetermin();
+					MessageBox("33이라 안됨", "알림", NULL);
+				}
+				else if (m_PlayerTurn == 'B')
 				{
 					m_PlayerTurn = 'W';
 					m_MemDC.SetStretchBltMode(HALFTONE);
@@ -293,9 +301,6 @@ void COmokDlg::OnLButtonDown(UINT nFlags, CPoint point)
 					m_MemDC.StretchBlt(m_DotSpace[i][j].GetRect().left, m_DotSpace[i][j].GetRect().top, 36, 36, &m_StoneDC, 1000, 0, 500, 500, SRCAND);
 					m_MemDC.StretchBlt(m_DotSpace[i][j].GetRect().left, m_DotSpace[i][j].GetRect().top, 36, 36, &m_StoneDC, 500, 0, 500, 500, SRCPAINT);
 				}
-				X = j;
-				Y = i;
-				Game = GamePlay(Y, X);
 			}
 		}
 	}
@@ -303,17 +308,20 @@ void COmokDlg::OnLButtonDown(UINT nFlags, CPoint point)
 	dc.BitBlt(0, 0, 800, 800, &m_MemDC, 0, 0, SRCCOPY);
 
 
-	if (Game == 'B')
+	if (Game == 'V')
 	{
-		KillTimer(1);
-		MessageBox("검은돌 승리!", "알림", NULL);
-		OnOK();
-	}
-	else if (Game == 'W')
-	{
-		KillTimer(1);
-		MessageBox("횐돌 승리!", "알림", NULL);
-		OnOK();
+		if (m_PlayerTurn == 'W')
+		{
+			KillTimer(1);
+			MessageBox("검은돌 승리!", "알림", NULL);
+			OnOK();
+		}
+		else if (m_PlayerTurn == 'B')
+		{
+			KillTimer(1);
+			MessageBox("횐돌 승리!", "알림", NULL);
+			OnOK();
+		}
 	}
 
 	CDialogEx::OnLButtonDown(nFlags, point);
@@ -322,124 +330,100 @@ void COmokDlg::OnLButtonDown(UINT nFlags, CPoint point)
 char COmokDlg::GamePlay(int y, int x)
 {
 	// TODO: 여기에 구현 코드 추가.
-	char Game = NULL;
-	int StoneCount[8];
-	bool StoneCounting[8];
+	/*
+	int eight_position[8][2] = { {-1,-1},{-1,0},{-1,1},{0,-1},{0,1},{1,-1},{1,0},{1,1} };
+	int eight_total[8] = { 0 };
+	int xx, yy;
+	char Color;
+	int check = 0;
 	for (int i = 0; i < 8; i++)
 	{
-		StoneCount[i] = 0;
-		StoneCounting[i] = true;
+		yy = y;
+		xx = x;
+		Color = m_DotSpace[y][x].GetAlive();
+		check = 0;
+		while (1)
+		{
+			yy += eight_position[i][0];
+			xx += eight_position[i][1];
+			if (Color == m_DotSpace[yy][xx].GetAlive())
+			{
+				eight_total[i] += 1;
+			}
+			else
+				if (check == 0)
+					check = 1;
+				else
+					break;
+		}
 	}
-
-	for (int i = 1; i < 6; i++)
+	for (int i = 0; i < 4; i++)
 	{
-		if (m_DotSpace[y][x].GetAlive() == 'B')
+		if (eight_total[i] + eight_total[7 - i] == 4)
 		{
-			if (m_DotSpace[y - i][x - i].GetAlive() == 'B' && StoneCounting[0] == true)
-				StoneCount[0] += 1;
-			else
-				StoneCounting[0] = false;
-
-			if (m_DotSpace[y - i][x].GetAlive() == 'B' && StoneCounting[1] == true)
-				StoneCount[1] += 1;
-			else
-				StoneCounting[1] = false;
-
-			if (m_DotSpace[y - i][x + i].GetAlive() == 'B' && StoneCounting[2] == true)
-				StoneCount[2] += 1;
-			else
-				StoneCounting[2] = false;
-
-
-			if (m_DotSpace[y][x - i].GetAlive() == 'B' && StoneCounting[3] == true)
-				StoneCount[3] += 1;
-			else
-				StoneCounting[3] = false;
-
-			if (m_DotSpace[y][x + i].GetAlive() == 'B' && StoneCounting[4] == true)
-				StoneCount[4] += 1;
-			else
-				StoneCounting[4] = false;
-
-
-			if (m_DotSpace[y + i][x - i].GetAlive() == 'B' && StoneCounting[5] == true)
-				StoneCount[5] += 1;
-			else
-				StoneCounting[5] = false;
-
-			if (m_DotSpace[y + i][x].GetAlive() == 'B' && StoneCounting[6] == true)
-				StoneCount[6] += 1;
-			else
-				StoneCounting[6] = false;
-
-			if (m_DotSpace[y + i][x + i].GetAlive() == 'B' && StoneCounting[7] == true)
-				StoneCount[7] += 1;
-			else
-				StoneCounting[7] = false;
-		}
-		else if (m_DotSpace[y][x].GetAlive() == 'W')
-		{
-			if (m_DotSpace[y - i][x - i].GetAlive() == 'W' && StoneCounting[0] == true)
-				StoneCount[0] += 1;
-			else
-				StoneCounting[0] = false;
-
-			if (m_DotSpace[y - i][x].GetAlive() == 'W' && StoneCounting[1] == true)
-				StoneCount[1] += 1;
-			else
-				StoneCounting[1] = false;
-
-			if (m_DotSpace[y - i][x + i].GetAlive() == 'W' && StoneCounting[2] == true)
-				StoneCount[2] += 1;
-			else
-				StoneCounting[2] = false;
-
-
-			if (m_DotSpace[y][x - i].GetAlive() == 'W' && StoneCounting[3] == true)
-				StoneCount[3] += 1;
-			else
-				StoneCounting[3] = false;
-
-			if (m_DotSpace[y][x + i].GetAlive() == 'W' && StoneCounting[4] == true)
-				StoneCount[4] += 1;
-			else
-				StoneCounting[4] = false;
-
-
-			if (m_DotSpace[y + i][x - i].GetAlive() == 'W' && StoneCounting[5] == true)
-				StoneCount[5] += 1;
-			else
-				StoneCounting[5] = false;
-
-			if (m_DotSpace[y + i][x].GetAlive() == 'W' && StoneCounting[6] == true)
-				StoneCount[6] += 1;
-			else
-				StoneCounting[6] = false;
-
-			if (m_DotSpace[y + i][x + i].GetAlive() == 'W' && StoneCounting[7] == true)
-				StoneCount[7] += 1;
-			else
-				StoneCounting[7] = false;
 		}
 	}
 
-	int Count = 0;
+	*/
 
+
+	char Game = NULL;
+	int StoneCount[8] = { 0 };
+	bool Stone3x3[8] = { 0 };
+	char Color = m_DotSpace[y][x].GetAlive();
+	for (int i = -1, Number = 0; i < 2; i++)
+	{
+		int Check = 0;
+		StoneCount[Number] = 0;
+		Stone3x3[Number] = false;
+		for (int k = -1; k < 2; k++, Number++)
+		{
+			if (i == 0 && k == 0)
+			{
+				Number--;
+				continue;
+			}
+			else
+			{
+				for (int imsi = 1;; imsi++)
+				{
+					if (Color == m_DotSpace[y + i * imsi][x + k * imsi].GetAlive() && Check == 0)
+					{
+						StoneCount[Number] += 1;
+					}
+					else
+					{
+						if (Check == 0 && m_DotSpace[y + i * imsi][x + k * imsi].GetAlive() == 'A')
+							Check = 1;
+						else if (Check == 1)
+							Stone3x3[Number] = true;
+						else
+							break;
+					}
+				}
+			}
+		}
+	}
+
+	int Count;
+	int Rule = 0;
 	for (int i = 0; i < 4; i++)
 	{
 		Count = StoneCount[i] + StoneCount[7 - i];
 		if (Count == 4)
+		{
+			Game = 'V';
 			break;
-		else
-			Count = 0;
-	}
-
-	if (Count == 4)
-	{
-		if (m_DotSpace[y][x].GetAlive() == 'B')
-			Game = 'B';
-		else if (m_DotSpace[y][x].GetAlive() == 'W')
-			Game = 'W';
+		}
+		if (Count == 2 && Stone3x3[i] && Stone3x3[7 - i])
+		{
+			if (Rule == 0)
+				Rule = 1;
+			else if (Rule == 1)
+				Game = 'F';
+			else
+				break;
+		}
 	}
 	return Game;
 }

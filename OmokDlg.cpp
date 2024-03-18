@@ -123,9 +123,6 @@ BOOL COmokDlg::OnInitDialog()
 	m_StoneDC.CreateCompatibleDC(&dc);
 	m_StoneDC.SelectObject(&m_StoneBm);
 
-
-	m_PlayerTurn = 'B';
-
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
 
@@ -217,6 +214,7 @@ void COmokDlg::OnBnClickedButtStart()
 			m_DotSpace[i][j].Setting(X, Y);
 		}
 	}
+	m_PlayerTurn = 'B';
 	CClientDC dc(this);
 
 	dc.BitBlt(0, 0, 800, 800, &m_MemDC, 0, 0, SRCCOPY);
@@ -370,12 +368,10 @@ char COmokDlg::GamePlay(int y, int x)
 	char Game = NULL;
 	int StoneCount[8] = { 0 };
 	bool Stone3x3[8] = { 0 };
+	int XX, YY, Check = 0;
 	char Color = m_DotSpace[y][x].GetAlive();
 	for (int i = -1, Number = 0; i < 2; i++)
 	{
-		int Check = 0;
-		StoneCount[Number] = 0;
-		Stone3x3[Number] = false;
 		for (int k = -1; k < 2; k++, Number++)
 		{
 			if (i == 0 && k == 0)
@@ -385,18 +381,24 @@ char COmokDlg::GamePlay(int y, int x)
 			}
 			else
 			{
+				int Check = 0;
 				for (int imsi = 1;; imsi++)
 				{
-					if (Color == m_DotSpace[y + i * imsi][x + k * imsi].GetAlive() && Check == 0)
+					XX = x + k * imsi;
+					YY = y + i * imsi;
+					if (Color == m_DotSpace[YY][XX].GetAlive() && Check == 0)
 					{
 						StoneCount[Number] += 1;
 					}
 					else
 					{
-						if (Check == 0 && m_DotSpace[y + i * imsi][x + k * imsi].GetAlive() == 'A')
+						if (Check == 0 && m_DotSpace[YY][XX].GetAlive() == 'A')
 							Check = 1;
-						else if (Check == 1)
+						else if (Check == 1 && m_DotSpace[YY][XX].GetAlive() == 'A')
+						{
 							Stone3x3[Number] = true;
+							break;
+						}
 						else
 							break;
 					}
@@ -415,14 +417,14 @@ char COmokDlg::GamePlay(int y, int x)
 			Game = 'V';
 			break;
 		}
-		if (Count == 2 && Stone3x3[i] && Stone3x3[7 - i])
+		else if (Count == 2 && (Stone3x3[i] || Stone3x3[7 - i]))
 		{
-			if (Rule == 0)
-				Rule = 1;
-			else if (Rule == 1)
+			Rule++;
+			if (Rule == 2)
+			{
 				Game = 'F';
-			else
 				break;
+			}
 		}
 	}
 	return Game;
